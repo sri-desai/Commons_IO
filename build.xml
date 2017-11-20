@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!--
+ Based on maven generated file on date October 1 2005
+ Added overview to javadoc
+ Include license in jar
+ Changed dist target and structure
+ -->
+
+<project default="jar" name="commons-io" basedir=".">
+  <!--Load local and user build preferences-->
+
+  <property file="build.properties">
+  </property>
+  <property file="${user.home}/build.properties">
+  </property>
+  <!--Build properties-->
+
+  <property name="defaulttargetdir" value="${basedir}/build">
+  </property>
+  <property name="libdir" value="${user.home}/.maven/repository">
+  </property>
+  <property name="classesdir" value="${basedir}/build/classes" />
+  <property name="srcdir" value="${basedir}/build/src" />
+  <property name="testclassesdir" value="${basedir}/build/test-classes">
+  </property>
+  <property name="testreportdir" value="${basedir}/build/test-reports">
+  </property>
+  <property name="final.name" value="commons-io-1.4-SNAPSHOT" />
+  <property name="dist.build.dir" value="${basedir}/build/dist-build" />
+  <property name="dist.bin" value="${dist.build.dir}/${final.name}" />
+  <property name="dist.src" value="${dist.build.dir}/${final.name}-src" />
+  <property name="javadocdir" value="${dist.bin}/docs" />
+  <property name="dist.zip.dir" value="${basedir}/build/dist" />
+  <property name="dist.bin.tar.name" value="${basedir}/build/dist/${final.name}.tar" />
+  <property name="dist.bin.gz.name" value="${basedir}/build/dist/${final.name}.tar.gz" />
+  <property name="dist.bin.zip.name" value="${basedir}/build/dist/${final.name}.zip" />
+  <property name="dist.src.tar.name" value="${basedir}/build/dist/${final.name}-src.tar" />
+  <property name="dist.src.gz.name" value="${basedir}/build/dist/${final.name}-src.tar.gz" />
+  <property name="dist.src.zip.name" value="${basedir}/build/dist/${final.name}-src.zip" />
+  <property name="proxy.host" value="">
+  </property>
+  <property name="proxy.port" value="">
+  </property>
+  <property name="proxy.username" value="">
+  </property>
+  <property name="proxy.password" value="">
+  </property>
+  <path id="build.classpath">
+  </path>
+  <target name="init" description="o Initializes some properties">
+    <mkdir dir="${libdir}">
+    </mkdir>
+    <condition property="noget">
+      <equals arg2="only" arg1="${build.sysclasspath}">
+      </equals>
+    </condition>
+    <!--Test if JUNIT is present in ANT classpath-->
+
+    <available property="Junit.present" classname="junit.framework.Test">
+    </available>
+    <!--Test if user defined a proxy-->
+
+    <condition property="useProxy">
+      <and>
+        <isset property="proxy.host">
+        </isset>
+        <not>
+          <equals trim="true" arg2="" arg1="${proxy.host}">
+          </equals>
+        </not>
+      </and>
+    </condition>
+  </target>
+  <target name="compile" description="o Compile the code" depends="get-deps">
+    <mkdir dir="${classesdir}">
+    </mkdir>
+    <javac destdir="${classesdir}" deprecation="true" debug="true" optimize="false" excludes="**/package.html">
+      <src>
+        <pathelement location="${basedir}/src/java">
+        </pathelement>
+      </src>
+      <classpath refid="build.classpath">
+      </classpath>
+    </javac>
+    <mkdir dir="${classesdir}/META-INF" />
+    <copy todir="${classesdir}/META-INF">
+      <fileset dir="${basedir}/.">
+        <include name="LICENSE.txt" />
+        <include name="NOTICE.txt" />
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="jar" description="o Create the jar" depends="compile,test">
+    <jar jarfile="${defaulttargetdir}/${final.name}.jar" excludes="**/*.html" basedir="${classesdir}" manifest="${basedir}/src/conf/MANIFEST.MF" />
+  </target>
+  <target name="dist-jar" depends="compile">
+    <jar jarfile="${defaulttargetdir}/${final.name}.jar" excludes="**/*.html" basedir="${classesdir}" manifest="${basedir}/src/conf/MANIFEST.MF" />
+    <copy todir="${srcdir}">
+      <fileset dir="${basedir}/src/java" includes="**/*.java" />
+    </copy>
+    <copy todir="${srcdir}/META-INF">
+      <fileset dir="${basedir}" includes="LICENSE*, NOTICE*" />
+    </copy>
+    <jar jarfile="${defaulttargetdir}/${final.name}-sources.jar" basedir="${srcdir}" manifest="${basedir}/src/conf/MANIFEST.MF"/>
+    <antcall target="internal-md5">
+      <param name="path" value="${defaulttargetdir}/${final.name}.jar"/>
+    </antcall>
+  </target>
+
+  <target name="clean" description="o Clean up the generated directories">
+    <delete dir="${defaulttargetdir}">
+    </delete>
+    <delete dir="${dist.bin}">
+    </delete>
+  </target>
+
+  <target name="dist" description="o Create a distribution" depends="dist-jar, dist-existing-jar">
+  </target>
+  <target name="dist-existing-jar" depends="javadoc">
+    <!-- this is used in a release where the jar is built on JDK1.3 -->
+    <!-- but the javadoc is built on JDK1.4 -->
+    <mkdir dir="${dist.bin}" />
+    <mkdir dir="${dist.zip.dir}" />
+    <!-- Javadoc -->
+    <copy todir="${javadocdir}/META-INF">
+      <fileset dir="${basedir}" includes="LICENSE*, NOTICE*" />
+    </copy>
+    <jar jarfile="${defaulttargetdir}/${final.name}-javadoc.jar" basedir="${javadocdir}" manifest="${basedir}/src/conf/MANIFEST.MF"/>
+  	<!-- Binary -->
+    <copy todir="${dist.bin}">
+      <fileset dir="${defaulttargetdir}" includes="*.jar,*.zip" />
+      <fileset dir="${basedir}" includes="LICENSE*, NOTICE*, README*, RELEASE-NOTES*" />
+    </copy>
+    <!-- Unix tar gz binary -->
+  	<fixcrlf srcdir="${dist.bin}" eol="lf" includes="*.txt" />
+    <tar longfile="gnu" tarfile="${dist.bin.tar.name}">
+      <tarfileset dir="${dist.build.dir}"/>
+    </tar>
+    <gzip zipfile="${dist.bin.gz.name}" src="${dist.bin.tar.name}"/>
+    <antcall target="internal-md5">
+      <param name="path" value="${dist.bin.gz.name}"/>
+    </antcall>
+    <delete file="${dist.bin.tar.name}" />
+    <!-- Windows zip binary -->
+  	<fixcrlf srcdir="${dist.bin}" eol="crlf" includes="*.txt" />
+    <zip zipfile="${dist.bin.zip.name}" >
+      <zipfileset dir="${dist.build.dir}"/>
+    </zip>
+    <antcall target="internal-md5">
+      <param name="path" value="${dist.bin.zip.name}"/>
+    </antcall>
+  	<!-- Source -->
+    <delete dir="${dist.bin}" />
+    <copy todir="${dist.src}">
+      <fileset dir="${defaulttargetdir}" includes="*.jar" />
+      <fileset dir="${basedir}" includes="LICENSE*, NOTICE*, README*, RELEASE-NOTES*, build.xml, checkstyle.xml, maven.xml, project.properties, project.xml" />
+      <fileset dir="${basedir}" includes="xdocs/**, src/**" />
+    </copy>
+    <!-- Unix tar gz source -->
+  	<fixcrlf srcdir="${dist.src}" eol="lf"  includes="*.txt,*.xml,*.css,*.properties" />
+    <tar longfile="gnu" tarfile="${dist.src.tar.name}">
+      <tarfileset dir="${dist.build.dir}"/>
+    </tar>
+    <gzip zipfile="${dist.src.gz.name}" src="${dist.src.tar.name}"/>
+    <antcall target="internal-md5">
+      <param name="path" value="${dist.src.gz.name}"/>
+    </antcall>
+    <delete file="${dist.src.tar.name}" />
+    <!-- Windows zip source -->
+  	<fixcrlf srcdir="${dist.src}" eol="crlf" includes="*.txt,*.xml,*.css,*.properties" />
+    <zip zipfile="${dist.src.zip.name}" >
+      <zipfileset dir="${dist.build.dir}"/>
+    </zip>
+    <antcall target="internal-md5">
+      <param name="path" value="${dist.src.zip.name}"/>
+    </antcall>
+  	<!-- POM -->
+  	<copy file="project.xml" tofile="${defaulttargetdir}/${final.name}.pom" />
+    <antcall target="internal-md5">
+      <param name="path" value="${defaulttargetdir}/${final.name}.pom"/>
+    </antcall>
+  	<!-- Tidy -->
+    <delete dir="${dist.build.dir}" />
+  </target>
+  <target name="internal-md5">
+    <basename property="_base" file="${path}"/>
+    <checksum file="${path}" property="md5"/>
+   	<echo message="${md5} *${_base}" file="${path}.md5"/>
+  </target>
+
+  <target name="test" description="o Run the test cases" if="test.failure" depends="internal-test">
+    <fail message="There were test failures." />
+  </target>
+  <target name="internal-test" if="Junit.present" depends="junit-present,compile-tests">
+    <mkdir dir="${testreportdir}">
+    </mkdir>
+    <junit dir="${basedir}" failureproperty="test.failure" printSummary="yes" fork="true" haltonerror="true">
+      <sysproperty key="basedir" value="." />
+      <formatter type="plain" />
+      <formatter usefile="false" type="plain" />
+      <classpath>
+        <path refid="build.classpath" />
+        <pathelement path="${testclassesdir}" />
+        <pathelement path="${classesdir}" />
+      </classpath>
+      <batchtest todir="${testreportdir}">
+        <fileset dir="${basedir}/src/test">
+          <include name="**/*Test*" />
+          <exclude name="**/*AbstractTestCase*" />
+          <exclude name="**/AllIOTestSuite*" />
+          <exclude name="**/PackageTestSuite*" />
+          <exclude name="**/testtools/**" />
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+  <target name="testjar" description="o Run the test cases against the jar" if="test.failure" depends="internal-testjar">
+    <fail message="There were test failures." />
+  </target>
+  <target name="internal-testjar" if="Junit.present" depends="junit-present,compile-tests">
+    <mkdir dir="${testreportdir}">
+    </mkdir>
+    <junit dir="${basedir}" failureproperty="test.failure" printSummary="yes" fork="true" haltonerror="true">
+      <sysproperty key="basedir" value="." />
+      <formatter type="plain" />
+      <formatter usefile="false" type="plain" />
+      <classpath>
+        <path refid="build.classpath" />
+        <pathelement path="${testclassesdir}" />
+        <pathelement location="${defaulttargetdir}/${final.name}.jar"/>
+      </classpath>
+      <batchtest todir="${testreportdir}">
+        <fileset dir="${basedir}/src/test">
+          <include name="**/*Test*" />
+          <exclude name="**/*AbstractTestCase*" />
+          <exclude name="**/AllIOTestSuite*" />
+          <exclude name="**/PackageTestSuite*" />
+          <exclude name="**/testtools/**" />
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+  <target name="junit-present" unless="Junit.present" depends="init">
+    <echo>================================= WARNING ================================</echo>
+    <echo>Junit isn't present in your ${ANT_HOME}/lib directory. Tests not executed.</echo>
+    <echo>==========================================================================</echo>
+  </target>
+  <target name="compile-tests" if="Junit.present" depends="junit-present,compile">
+    <mkdir dir="${testclassesdir}">
+    </mkdir>
+    <javac destdir="${testclassesdir}" deprecation="true" debug="true" optimize="false" excludes="**/package.html">
+      <src>
+        <pathelement location="${basedir}/src/test">
+        </pathelement>
+      </src>
+      <classpath>
+        <path refid="build.classpath">
+        </path>
+        <pathelement path="${classesdir}">
+        </pathelement>
+      </classpath>
+    </javac>
+  </target>
+  <target name="javadoc" description="o Generate javadoc" depends="get-deps">
+    <mkdir dir="${javadocdir}">
+    </mkdir>
+    <tstamp>
+      <format pattern="2002-yyyy" property="year">
+      </format>
+    </tstamp>
+    <property name="copyright" value="Copyright &amp;copy;  The Apache Software Foundation. All Rights Reserved.">
+    </property>
+    <property name="title" value="IO 1.4-SNAPSHOT">
+    </property>
+    <javadoc use="true" private="true" destdir="${javadocdir}" author="true" version="true" sourcepath="${basedir}/src/java" packagenames="org.apache.commons.io.*" overview="src/java/org/apache/commons/io/overview.html">
+      <classpath>
+        <path refid="build.classpath">
+        </path>
+      </classpath>
+      <link href="http://java.sun.com/j2se/1.4/docs/api/" />
+      <link href="http://java.sun.com/webservices/docs/1.5/api/" />        
+    </javadoc>
+  </target>
+  <target name="get-deps" unless="noget">
+  </target>
+  <target name="setProxy" if="useProxy" depends="init">
+    <!--Proxy settings works only with a JDK 1.2 and higher.-->
+
+    <echo>Proxy used :</echo>
+    <echo>Proxy host [${proxy.host}]</echo>
+    <echo>Proxy port [${proxy.port}]</echo>
+    <echo>Proxy user [${proxy.username}]</echo>
+    <setproxy proxyuser="${proxy.username}" proxyport="${proxy.port}" proxypassword="${proxy.password}" proxyhost="${proxy.host}">
+    </setproxy>
+  </target>
+  <target name="noProxy" unless="useProxy" depends="init">
+    <echo>Proxy not used.</echo>
+  </target>
+  <target name="install-maven">
+    <get dest="${user.home}/maven-install-latest.jar" usetimestamp="true" src="${repo}/maven/maven-install-latest.jar">
+    </get>
+    <unjar dest="${maven.home}" src="${user.home}/maven-install-latest.jar">
+    </unjar>
+  </target>
+
+<!-- ====================================================================== -->
+  <target name="clirr">
+    <taskdef resource="clirrtask.properties">
+      <classpath path="../clirr/clirr-core-0.6-uber.jar;" />
+    </taskdef>
+    <clirr>
+      <origfiles dir="${libdir}/commons-io/jars" includes="commons-io-1.1.jar"/>
+      <newfiles dir="${defaulttargetdir}" includes="${final.name}.jar" />
+      <formatter type="plain" outfile="${defaulttargetdir}/clirr.txt" />
+    </clirr>
+  </target>
+
+</project>
