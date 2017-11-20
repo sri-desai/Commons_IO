@@ -19,6 +19,7 @@ package org.apache.commons.io;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -780,6 +781,15 @@ public class FileUtilsTestCase extends FileBasedTestCase {
         assertTrue("Check No Exist", !destination.exists());
     }
 
+    public void testForceDeleteAFile3() throws Exception {
+        File destination = new File(getTestDirectory(), "no_such_file");
+        assertTrue("Check No Exist", !destination.exists());
+        try {
+            FileUtils.forceDelete(destination);
+            fail("Should generate FileNotFoundException");
+        } catch (FileNotFoundException ignored){
+        }
+    }
     // copyFileToDirectory
 
     public void testCopyFile1ToDir() throws Exception {

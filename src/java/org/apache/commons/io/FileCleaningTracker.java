@@ -175,7 +175,7 @@ public class FileCleaningTracker {
         exitWhenFinished = true;
         if (reaper != null) {
             synchronized (reaper) {
-                reaper.interrupt();
+                reaper.interrupt();                
             }
         }
     }

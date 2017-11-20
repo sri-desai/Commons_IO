@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -1237,14 +1238,20 @@ public class FileUtils {
     public static void forceDelete(File file) throws IOException {
         if (file.isDirectory()) {
             deleteDirectory(file);
-        } else {
-            if (!file.exists()) {
-                throw new FileNotFoundException("File does not exist: " + file);
-            }
-            if (!file.delete()) {
-                String message =
-                    "Unable to delete file: " + file;
-                throw new IOException(message);
+        } else {        	
+        	boolean isFileExists = file.exists();
+        	boolean isSymbolicLink = Files.isSymbolicLink(file.toPath());
+
+            if (!file.delete()) {            	
+            	if(!isSymbolicLink) {
+            		if(!isFileExists) {
+            			throw new FileNotFoundException("File does not exist: " + file);
+            		}
+            		else {
+            			throw new IOException("Unable to delete file: " + file);
+            		}
+            			
+            	}            	           
             }
         }
     }
